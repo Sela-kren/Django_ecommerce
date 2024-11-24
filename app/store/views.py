@@ -3,7 +3,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login, authenticate
 from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
-
+from .models import Product
 
 # Create your views here.
 def login_view(request):
@@ -15,7 +15,7 @@ def login_view(request):
             user = authenticate(username=username, password=password)
             if user is not None:
                 login(request, user)
-                return redirect('home')  # Redirect to home page after login
+                return redirect('')  # Redirect to home page after login
             else:
                 messages.error(request, 'Invalid username or password')
         else:
@@ -39,3 +39,7 @@ def signup_view(request):
         form = UserCreationForm()
 
     return render(request, 'store/signup.html', {'form': form})
+
+def product_list(request):
+    products = Product.objects.all()
+    return render(request, 'store/product_list.html', {'products': products})
