@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Shopping Cart</title>
+    <script>
+        // Function to handle the checkout AJAX request
+        function getCsrfToken() {
+            const token = document.querySelector('[name=csrfmiddlewaretoken]');
+            if (token) {
+                return token.value;
+            }
+            return '';  // Return an empty string if token is not found
+        }
+
+
+
+        function getCsrfToken() {
+    const token = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (token) {
+        return token.value;
+    }
+    return '';  // Return an empty string if token is not found
+    }
+
+    function checkout() {
+        const csrfToken = getCsrfToken();
+
+        fetch("{% url 'checkout' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+            },
+            body: JSON.stringify({ action: 'checkout' })  // Send an action to indicate checkout
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Display the success or error message
+            const messageDiv = document.getElementById('message');
+            if (data.success) {
+                messageDiv.style.color = 'green';
+                messageDiv.textContent = data.success;
+
+                setTimeout(() => {
+                    window.location.href = "/";  
+                }, 200);
+            } else {
+                messageDiv.style.color = 'red';
+                messageDiv.textContent = data.error;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+    </script>
+</head>
+
+<body>
+    {% block content %}
+    <h1>Your Shopping Cart</h1>
+    {{ csrf_token }}
+    {% if empty_message %}
+        <p>{{ empty_message }}</p>
+    {% else %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Total</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in cart_items %}
+                    <tr>
+                        <td>{{ item.product.name }}</td>
+                        <td>${{ item.product.price }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td class="item-total"></td>
+                        <td></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h3>Total Price: <span id="total-price">${{ total_price|floatformat:2 }}</span></h3>
+
+        <!-- Checkout Button -->
+        <button onclick="checkout()">Complete Purchase</button>
+
+        <!-- Message area for success or error message -->
+        <div id="message"></div>
+    {% endif %}
+    {% endblock %}
+</body>
+</html>

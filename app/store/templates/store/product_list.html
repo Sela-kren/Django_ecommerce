@@ -1,17 +1,56 @@
-<!-- store/templates/store/product_list.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product List</title>
+    <script>
+        // Function to get the CSRF token from the page
+        function getCsrfToken() {
+            const token = document.querySelector('[name=csrfmiddlewaretoken]');
+            if (token) {
+                return token.value;
+            }
+            return '';  // Return an empty string if token is not found
+        }
+
+        // Function to handle adding product to the cart
+        function addToCart(productId) {
+            const csrfToken = getCsrfToken();  // Get CSRF token
+
+            fetch('/add/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,  // Include CSRF token in the headers
+                },
+                body: JSON.stringify({ 'productId': productId }),  // Send product ID in JSON format
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Product added to cart successfully!');
+                } else if (data.error) {
+                    alert(data.error);  // Show error message if the API returns an error
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Something went wrong. Please try again.');
+            });
+        }
+    </script>
 </head>
 <body>
     <h1>Product List</h1>
+    <p>CSRF Token: {{ csrf_token }}</p>
+    <p>Logged in as: {{ request.user.username }}</p>
+
     <ul>
         {% for product in products %}
             <li>
                 <h3>{{ product.name }}</h3>
+                <h3>Product ID: {{ product.id }}</h3>
                 <p>{{ product.description }}</p>
                 <p>Price: ${{ product.price }}</p>
                 {% if product.image_url %}
@@ -19,6 +58,7 @@
                 {% else %}
                     <p>No image available</p>
                 {% endif %}
+                <button onclick="addToCart({{ product.id }})">Add to Cart</button>
             </li>
         {% empty %}
             <p>No products found.</p>
