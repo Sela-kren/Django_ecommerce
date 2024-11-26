@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+    {% load static %} 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product List</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <script>
         // Function to get the CSRF token from the page
         function getCsrfToken() {
@@ -42,27 +44,53 @@
     </script>
 </head>
 <body>
-    <h1>Product List</h1>
-    <p>CSRF Token: {{ csrf_token }}</p>
-    <p>Logged in as: {{ request.user.username }}</p>
+    <div class="w-screen flex flex-col justify-center items-center">
+        <div class="w-full flex items-center justify-center border-pink-500" 
+            style="height: 100px; margin-bottom: 10px; border-bottom: 1px solid; border-top: 1px solid; border-color: #fbbfce;
+        ">
+            <img src="../../../static/image/beautyNature_cut.jpg" style="height: 80px; object-fit: fill;"  alt="">
+        </div>
+        <div class=" flex items-center border-pink-500" 
+            style="height: 60px; margin-bottom: 10px; justify-content: space-between; width: 95%;
+        ">
+            <h3 class="text-pink-300 ">
+                home
+            </h3>
+            <button 
+                class="flex items-center cursor-pointer rounded-md icon-button" 
+                style="background-color: white; border: none;" 
+                onclick="window.location.href='/cart'">
+                    <img src="../../../static/image/cart.svg" alt="">
+            </button>
 
-    <ul>
-        {% for product in products %}
-            <li>
-                <h3>{{ product.name }}</h3>
-                <h3>Product ID: {{ product.id }}</h3>
-                <p>{{ product.description }}</p>
-                <p>Price: ${{ product.price }}</p>
-                {% if product.image_url %}
-                    <img src="{{ product.image_url }}" alt="{{ product.name }}" width="100">
-                {% else %}
-                    <p>No image available</p>
-                {% endif %}
-                <button onclick="addToCart({{ product.id }})">Add to Cart</button>
-            </li>
-        {% empty %}
-            <p>No products found.</p>
-        {% endfor %}
-    </ul>
+
+        </div>
+        <div style="height: 150px;">
+            <img src="../../../static/image/flower.svg" alt="">
+            <h1  style="translate: 40px -120px;">Product List</h1>
+        </div>
+        <!-- <p>CSRF Token: {{ csrf_token }}</p> -->
+        <!-- <p>Logged in as: {{ request.user.username }}</p> -->
+
+        <div class="grid-cols-4 gap-4 " style="display: grid; padding-left: 2vw; padding-right: 2vw;">
+            {% for product in products %}
+                <div class="flex flex-col  rounded-md " style="min-width: 19rem; max-width: 19rem; gap: 0; padding: 4px 4px 10px 4px ;">
+                    {% if product.image_url %}
+                        <img style="width: 19rem; height: 22rem; object-fit: cover;" class="border-slate-100" src="{{ product.image_url }}" alt="{{ product.name }}" width="100">
+                    {% else %}
+                        <p>No image available</p>
+                    {% endif %}
+                    <h3 class="truncate-2-lines">{{ product.name }}</h3>
+                    <!-- <h3>Product ID: {{ product.id }}</h3> -->
+                    <!-- <p class="truncate">{{ product.description }}</p> -->
+                    <p class="w-full text-center text-xl">${{ product.price }}</p>
+                    <button onclick="addToCart({{ product.id }})" class="bg-pink-200 text-lg text-white cursor-pointer=" style="height: 2.5rem;border: 0px solid;
+                    ">Add to Cart</button>
+                </div> 
+            {% empty %}
+                <p>No products found.</p>
+            {% endfor %}
+        </div>
+    </div>
 </body>
 </html>

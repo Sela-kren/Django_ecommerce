@@ -88,6 +88,22 @@ CSRF_COOKIE_NAME = "csrftoken"
 CSRF_HEADER_NAME = "HTTP_X_CSRFTOKEN"
 
 
+# settings.py
+
+# This defines the URL where static files can be accessed.
+STATIC_URL = '/static/'
+
+# During development, static files can be served from the app's static folder.
+STATICFILES_DIRS = [
+    BASE_DIR / "static",  # This will look for a "static" directory in your project's root directory
+]
+
+# The directory where static files will be collected during deployment.
+# (If you're using `collectstatic` for production)
+STATIC_ROOT = BASE_DIR / "staticfiles"  # The folder where collected static files will be stored.
+
+
+
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
