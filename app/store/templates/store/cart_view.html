@@ -5,97 +5,174 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Shopping Cart</title>
     <script>
-        // Function to handle the checkout AJAX request
-        function getCsrfToken() {
-            const token = document.querySelector('[name=csrfmiddlewaretoken]');
-            if (token) {
-                return token.value;
-            }
-            return '';  // Return an empty string if token is not found
-        }
-
-
-
-        function getCsrfToken() {
+   function getCsrfToken() {
     const token = document.querySelector('[name=csrfmiddlewaretoken]');
     if (token) {
         return token.value;
     }
     return '';  // Return an empty string if token is not found
-    }
+}
 
-    function checkout() {
-        const csrfToken = getCsrfToken();
+function updateCart(productId, action) {
+    const csrfToken = getCsrfToken();
 
-        fetch("{% url 'checkout' %}", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken,
-            },
-            body: JSON.stringify({ action: 'checkout' })  // Send an action to indicate checkout
+    fetch("{% url 'update_cart' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+        },
+        body: JSON.stringify({
+            product_id: productId,
+            action: action,
         })
-        .then(response => response.json())
-        .then(data => {
-            // Display the success or error message
-            const messageDiv = document.getElementById('message');
-            if (data.success) {
-                messageDiv.style.color = 'green';
-                messageDiv.textContent = data.success;
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update the cart items dynamically
+            data.cart_items.forEach(item => {
+                document.getElementById(`quantity-${item.product_id}`).textContent = item.quantity;
+                document.getElementById(`item-total-${item.product_id}`).textContent = `$${item.item_total.toFixed(2)}`;
+            });
 
-                setTimeout(() => {
-                    window.location.href = "/";  
-                }, 200);
-            } else {
-                messageDiv.style.color = 'red';
-                messageDiv.textContent = data.error;
+            // Update the total price
+            document.getElementById('total-price').textContent = `$${data.total_price.toFixed(2)}`;
+
+            // Check if the cart is empty and show the empty message
+            if (data.cart_items.length === 0) {
+                document.querySelector('#cart-items-body').innerHTML = '<tr><td colspan="5">Your cart is empty.</td></tr>';
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
-    }
+        } else {
+            alert(data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+function checkout() {
+    const csrfToken = getCsrfToken();
+
+    fetch("{% url 'checkout' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+        },
+        body: JSON.stringify({ action: 'checkout' })  // Send an action to indicate checkout
+    })
+    .then(response => response.json())
+    .then(data => {
+        const messageDiv = document.getElementById('message');
+        if (data.success) {
+            messageDiv.style.color = 'green';
+            messageDiv.textContent = data.success;
+
+            setTimeout(() => {
+                window.location.href = "/";  // Redirect after successful checkout
+            }, 200);
+        } else {
+            messageDiv.style.color = 'red';
+            messageDiv.textContent = data.error;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+function fetchUpdatedCart() {
+    const csrfToken = getCsrfToken();
+
+    fetch("{% url 'cart_json' %}", {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.cart_empty) {
+            document.querySelector('tbody').innerHTML = '<tr><td colspan="5">Your cart is empty.</td></tr>';
+        } else {
+            let cartHTML = '';
+            data.cart_items.forEach(item => {
+                cartHTML += `
+                    <tr id="product-${item.product_id}">
+                        <td>${item.product_name}</td>
+                        <td>${item.product_price}</td>
+                        <td class="quantity">${item.quantity}</td>
+                        <td class="item-total">$${item.item_total.toFixed(2)}</td>
+                        <td>
+                            <button onclick="updateCart('${item.product_id}', 'decrease')">-</button>
+                            <button onclick="updateCart('${item.product_id}', 'increase')">+</button>
+                            <button onclick="updateCart('${item.product_id}', 'remove')">Remove</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            document.querySelector('tbody').innerHTML = cartHTML;
+
+            // Update the total price
+            document.getElementById('total-price').textContent = `$${data.total_price.toFixed(2)}`;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
     </script>
 </head>
 
 <body>
     {% block content %}
+    {% csrf_token %}
     <h1>Your Shopping Cart</h1>
-    {{ csrf_token }}
+    
+    <div id="message"></div>
+    
     {% if empty_message %}
         <p>{{ empty_message }}</p>
     {% else %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Product</th>
-                    <th>Price</th>
-                    <th>Quantity</th>
-                    <th>Total</th>
-                    <th>Actions</th>
+    <table>
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Item Total</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="cart-items-body">
+            {% for item in cart_items %}
+                <tr id="product-{{ item.product.id }}">
+                    <td>{{ item.product.name }}</td>
+                    <td>${{ item.product.price }}</td>
+                    <td class="quantity">
+                        <button onclick="updateCart('{{ item.product.id }}', 'decrease')">-</button>
+                        <span id="quantity-{{ item.product.id }}">{{ item.quantity }}</span>
+                        <button onclick="updateCart('{{ item.product.id }}', 'increase')">+</button>
+                    </td>
+                    <td class="item-total" id="item-total-{{ item.product.id }}">${{ item.item_total|floatformat:2 }}</td>
+                    <td>
+                        <button onclick="updateCart('{{ item.product.id }}', 'remove')">Remove</button>
+                    </td>
                 </tr>
-            </thead>
-            <tbody>
-                {% for item in cart_items %}
-                    <tr>
-                        <td>{{ item.product.name }}</td>
-                        <td>${{ item.product.price }}</td>
-                        <td>{{ item.quantity }}</td>
-                        <td class="item-total"></td>
-                        <td></td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+            {% endfor %}
+        </tbody>
+    </table>
 
-        <h3>Total Price: <span id="total-price">${{ total_price|floatformat:2 }}</span></h3>
+    <h3>Total Price: <span id="total-price">${{ total_price|floatformat:2 }}</span></h3>
 
-        <!-- Checkout Button -->
-        <button onclick="checkout()">Complete Purchase</button>
+    <button onclick="checkout()">Complete Purchase</button>
 
-        <!-- Message area for success or error message -->
-        <div id="message"></div>
     {% endif %}
     {% endblock %}
 </body>
+
+</html>
 </html>
