@@ -1777,7 +1777,18 @@ body {
     background-color: white;
   }
 
-  .icon-button:hover{
-    background-color: #f1f5f9;
+  .icon-button {
+    background-color: transparent; /* Default background color */
+    border: 0px !important; /* Remove default button border */
+    cursor: pointer; /* Ensure pointer cursor */
   }
-  
+
+  .icon-button:hover {
+      background-color: black !important; /* Hover effect */
+      color: white; /* Optional: Change text color on hover */
+  }
+
+
+.s-table{
+  width: 100%; 
+}
